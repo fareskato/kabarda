@@ -105,7 +105,7 @@ func doNew(appName string) {
 		exitGracefully(err)
 	}
 	// run go mod vendor
-	color.Yellow("\tCreating go.mod file... ")
+	color.Yellow("\tRunning go mod vendor... ")
 	cmdVendor := exec.Command("go", "mod", "vendor")
 	err = cmdVendor.Start()
 	if err != nil {
