@@ -100,7 +100,7 @@ func doNew(appName string) {
 	}
 	mod := string(data)
 	mod = strings.ReplaceAll(mod, "${APP_NAME}", appURL)
-	err = copyDataToFile([]byte(mod), fmt.Sprintf("./%s/.go.mod", appName))
+	err = copyDataToFile([]byte(mod), fmt.Sprintf("./%s/go.mod", appName))
 	if err != nil {
 		exitGracefully(err)
 	}
