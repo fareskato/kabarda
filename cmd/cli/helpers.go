@@ -10,6 +10,7 @@ import (
 )
 
 func showHelp() {
+	color.Yellow("")
 	color.Yellow(`Available commands:
 	help                          - show help commands
 	version                       - print application version
@@ -24,6 +25,7 @@ func showHelp() {
 	make key                      - creates 32 character encryption key
 	make mail <name>              - creates starter mail templates(html and plain text) in the mail directory
 `)
+	color.Yellow("")
 }
 
 // setup will set some needed fields in kbr(of type Kabarda)
@@ -60,6 +62,7 @@ func exitGracefully(err error, msg ...string) {
 		color.Yellow(message)
 	} else {
 		color.Green("Finished")
+		color.Green("")
 	}
 	os.Exit(0)
 }

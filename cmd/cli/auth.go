@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/fatih/color"
+	"os"
 	"time"
 )
 
@@ -21,11 +22,13 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
+	// TEMP
 	// run migrations
 	err = doMigrate("up", "")
 	if err != nil {
 		exitGracefully(err)
 	}
+
 	// copy all auth functionality related files(users and token models)
 	err = copyFileFromTemplate("templates/data/user.go.txt", kbr.RootPath+"/data/user.go")
 	if err != nil {
@@ -80,11 +83,23 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
+
+	// correct the imports on auth
+	appURL = os.Getenv("APP_NAME")
+	updateSource()
+
 	// inform developer
+	color.Yellow("")
 	color.Yellow(" - users, tokens and remember_tokens migrations created in migrations directory and ran")
 	color.Yellow(" - user and token models created in data directory")
 	color.Yellow(" - auth middlewares created in middlewares directory")
 	color.Yellow("")
-	color.Green(" - Please add user and token models in data/models.go, and add appropriate middlewares to your routes")
+	color.Green(" - Please uncomment Users and Tokens models in data/models.go, and add appropriate middlewares to your routes")
+	color.Yellow("")
+	color.Yellow("Authentication routes are:")
+	color.Green("/users/login Get/Post")
+	color.Green("/users/logout Post")
+	color.Green("/users/forgot-password Get/Post")
+	color.Green("/users/reset-password Get/Post")
 	return nil
 }

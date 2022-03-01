@@ -44,6 +44,7 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
+
 	// create .env file with needed data
 	color.Yellow("\tCreating .env file... ")
 	data, err := templateFS.ReadFile("templates/env.txt")
@@ -105,6 +106,7 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
+
 	// update existing .go files with correct imports and data
 	os.Chdir("./" + appName)
 	time.Sleep(3 * time.Second)
@@ -119,6 +121,22 @@ func doNew(appName string) {
 		exitGracefully(err)
 	}
 	time.Sleep(1 * time.Second)
+	color.Green("")
 	color.Green("Done building " + appURL)
-	color.Green("Happy coding")
+	color.Green("")
+	color.Blue("Please set application database, session, email ...etc in .env file")
+	color.Green("")
+	color.Green("First of all navigate to your application root directory and type: make restart ")
+	color.Green("this command will start web server...")
+	color.Green("")
+	color.Green("Second run: copy the binary file to your application root so you can use it")
+	color.Green("to run commands")
+	color.Green("")
+	color.Green("Third run: binFile make auth, this command will generate auth built in package")
+	color.Green("with all needed functionality")
+	color.Green("")
+	color.Red("to see all commands run: ./binfile help")
+	color.Green("")
+	color.Blue("Happy coding )")
+	color.Green("")
 }
