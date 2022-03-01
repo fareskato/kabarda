@@ -105,17 +105,8 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
-
 	// update existing .go files with correct imports and data
 	os.Chdir("./" + appName)
-	time.Sleep(3 * time.Second)
-	color.Yellow("\tRunning go mod vendor... ")
-	cmdVendor := exec.Command("go", "mod", "vendor")
-	err = cmdVendor.Start()
-
-	if err != nil {
-		exitGracefully(err)
-	}
 	time.Sleep(3 * time.Second)
 	color.Yellow("\tUpdating source files... ")
 	updateSource()
