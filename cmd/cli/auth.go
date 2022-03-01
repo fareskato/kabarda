@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/fatih/color"
+	"os"
 	"time"
 )
 
@@ -81,6 +82,7 @@ func doAuth() error {
 		exitGracefully(err)
 	}
 	color.Yellow("\tUpdating source files... ")
+	os.Chdir("./" + kbr.RootPath)
 	updateSource()
 	// inform developer
 	color.Yellow(" - users, tokens and remember_tokens migrations created in migrations directory and ran")
