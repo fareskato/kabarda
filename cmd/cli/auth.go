@@ -80,6 +80,8 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
+	color.Yellow("\tUpdating source files... ")
+	updateSource()
 	// inform developer
 	color.Yellow(" - users, tokens and remember_tokens migrations created in migrations directory and ran")
 	color.Yellow(" - user and token models created in data directory")

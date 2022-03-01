@@ -105,18 +105,10 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
-	// run go mod vendor
-	//color.Yellow("\tRunning go mod vendor... ")
-	//cmdVendor := exec.Command("go", "mod", "vendor")
-	//err = cmdVendor.Start()
-	//if err != nil {
-	//	exitGracefully(err)
-	//}
 
 	// update existing .go files with correct imports and data
-
 	os.Chdir("./" + appName)
-	time.Sleep(4 * time.Second)
+	time.Sleep(3 * time.Second)
 	color.Yellow("\tRunning go mod vendor... ")
 	cmdVendor := exec.Command("go", "mod", "vendor")
 	err = cmdVendor.Start()
@@ -124,15 +116,18 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
+	time.Sleep(3 * time.Second)
 	color.Yellow("\tUpdating source files... ")
 	updateSource()
 	// run go mod tidy in the project directory
+	time.Sleep(1 * time.Second)
 	color.Yellow("\tRunning go mod tidy... ")
 	cmd := exec.Command("go", "mod", "tidy")
 	err = cmd.Start()
 	if err != nil {
 		exitGracefully(err)
 	}
+	time.Sleep(1 * time.Second)
 	color.Green("Done building " + appURL)
 	color.Green("Happy coding")
 }
