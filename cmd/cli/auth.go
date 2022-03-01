@@ -82,7 +82,7 @@ func doAuth() error {
 		exitGracefully(err)
 	}
 	color.Yellow("\tUpdating source files... ")
-	os.Chdir("./" + kbr.RootPath)
+	fmt.Println(os.Getwd())
 	updateSource()
 	// inform developer
 	color.Yellow(" - users, tokens and remember_tokens migrations created in migrations directory and ran")
