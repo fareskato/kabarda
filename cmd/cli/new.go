@@ -107,14 +107,13 @@ func doNew(appName string) {
 	}
 
 	// run go mod tidy in the project directory
-	//color.Yellow("\tRunning go mod tidy... ")
-	//cmd := exec.Command("go", "mod", "tidy")
-	//err = cmd.Start()
-	//if err != nil {
-	//	exitGracefully(err)
-	//}
-	panic("stop")
-	time.Sleep(2 * time.Second)
+	color.Yellow("\tRunning go mongo installation... ")
+	cmd := exec.Command("go", "get", "go.mongodb.org/mongo-driver/mongo")
+	err = cmd.Start()
+	if err != nil {
+		exitGracefully(err)
+	}
+	time.Sleep(3 * time.Second)
 	// run go mod vendor
 	color.Yellow("\tRunning go mod vendor... ")
 	cmdVendor := exec.Command("go", "mod", "vendor")
@@ -122,15 +121,16 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
-
+	time.Sleep(1 * time.Second)
 	// update existing .go files with correct imports and data
 	color.Yellow("\tUpdating source files... ")
 	os.Chdir("./" + appName)
 	updateSource()
 	// run go mod tidy in the project directory
+	time.Sleep(3 * time.Second)
 	color.Yellow("\tRunning go mod tidy... ")
-	cmd := exec.Command("go", "mod", "tidy")
-	err = cmd.Start()
+	cmd3 := exec.Command("go", "mod", "tidy")
+	err = cmd3.Start()
 	if err != nil {
 		exitGracefully(err)
 	}
