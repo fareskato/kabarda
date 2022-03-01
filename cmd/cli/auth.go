@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"os"
 	"time"
 )
 
@@ -81,17 +80,11 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
-
 	// inform developer
 	color.Yellow(" - users, tokens and remember_tokens migrations created in migrations directory and ran")
 	color.Yellow(" - user and token models created in data directory")
 	color.Yellow(" - auth middlewares created in middlewares directory")
 	color.Yellow("")
 	color.Green(" - Please add user and token models in data/models.go, and add appropriate middlewares to your routes")
-	color.Yellow("\tUpdating source files... ")
-	wd, _ := os.Getwd()
-	color.Red("Current dir is: %s", wd)
-	color.Red("Root dir is: %s", kbr.RootPath)
-	updateSource()
 	return nil
 }
