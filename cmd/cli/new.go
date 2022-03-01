@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 )
 
 ///////////////////////////
@@ -104,6 +105,7 @@ func doNew(appName string) {
 	if err != nil {
 		exitGracefully(err)
 	}
+	time.Sleep(2 * time.Second)
 	// run go mod vendor
 	color.Yellow("\tRunning go mod vendor... ")
 	cmdVendor := exec.Command("go", "mod", "vendor")
