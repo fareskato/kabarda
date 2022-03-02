@@ -83,7 +83,10 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
-
+	err = copyFileFromTemplate("templates/views/register.jet", kbr.RootPath+"/views/register.jet")
+	if err != nil {
+		exitGracefully(err)
+	}
 	// correct the imports on auth
 	appURL = os.Getenv("APP_NAME")
 	updateSource()
@@ -93,6 +96,8 @@ func doAuth() error {
 	color.Yellow(" - users, tokens and remember_tokens migrations created in migrations directory and ran")
 	color.Yellow(" - user and token models created in data directory")
 	color.Yellow(" - auth middlewares created in middlewares directory")
+	color.Yellow("")
+	color.Yellow("auth routes added to your routes.go")
 	color.Yellow("")
 	color.Green(" - Please uncomment Users and Tokens models in data/models.go, and add appropriate middlewares to your routes")
 	color.Yellow("")
