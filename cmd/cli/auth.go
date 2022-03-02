@@ -98,6 +98,7 @@ func doAuth() error {
 	color.Yellow("")
 	color.Yellow("Authentication routes are:")
 	color.Green("/users/login Get/Post")
+	color.Green("/users/register Get/Post")
 	color.Green("/users/logout Post")
 	color.Green("/users/forgot-password Get/Post")
 	color.Green("/users/reset-password Get/Post")
