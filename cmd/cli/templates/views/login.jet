@@ -18,39 +18,33 @@
         <input type="hidden" name="csrf_token" value={{.CSRFToken}}>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required="" autocomplete="email-new">
-        </div>
+       <input type="email" value="{{user.Email}}" class='form-control {{isset(validator.Errors["email"]) ? "is-invalid" : ""}}' id="email" name="email" required="" autocomplete="email-new">
+                <div class="invalid-feedback">
+                            {{isset(validator.Errors["email"]) ? validator.Errors["email"] : ""}}
+                </div>        </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password" required="" autocomplete="password-new">
+                <input type="password" id="password" class='form-control {{isset(validator.Errors["password"]) ? "is-invalid" : ""}}' name="password" required="" autocomplete="password-new">
+                              <div class="invalid-feedback">
+                                          {{isset(validator.Errors["password"]) ? validator.Errors["password"] : ""}}
+                              </div>
         </div>
         <div class="form-check form-switch">
             <input type="checkbox" class="form-check-input"  name="remember" value="remember">
             <label for="remember" class="form-check-label">Remember me</label>
         </div>
         <hr>
-        <a href="JavaScript:void(0);" class="btn btn-dark w-100" onclick="validateLogin();">Login</a>
+        <input type="submit" class="btn btn-dark w-100 my-2" value="Login">
         <p class="mt-2">
             <small><a href="/users/forgot-password">Forgot Password?</a></small>
         </p>
     </form>
     <div class="text-center">
-        <a class="btn btn-outline-secondary w-100" href="/"> Back</a>
+        <p> didn't register yes?? <a class="" href="/users/register"> Register</a></p>
+        <a class="btn btn-outline-secondary w-100" href="/"> Home</a>
     </div>
 {{ end }}
 
 {{ block js() }}
-<script>
-    function validateLogin() {
-        let form = document.getElementById('login-form');
-        if(form.checkValidity() === false){
-            this.event.preventDefault();
-            this.event.stopPropagation();
-            form.classList.add("was-validated");
-            return;
-        }
-        form.classList.add("was-validated");
-        form.submit();
-    }
-</script>
+
 {{ end }}

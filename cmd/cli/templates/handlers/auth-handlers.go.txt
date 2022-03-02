@@ -9,14 +9,95 @@ import (
 	"github.com/fareskato/kabarda/signer"
 	"myapp/data"
 	"net/http"
+	"os"
 	"time"
 )
 
 const RememberToken = "remember_token"
 
+func (h *Handlers) UserRegister(w http.ResponseWriter, r *http.Request) {
+	vars := make(jet.VarMap)
+	validator := h.App.Validator(nil)
+	vars.Set("validator", validator)
+	vars.Set("user", data.User{})
+	err := h.render(w, r, "register", vars, nil)
+	if err != nil {
+		h.App.ErrorLog.Println(err)
+	}
+}
+
+func (h *Handlers) UserRegisterPost(w http.ResponseWriter, r *http.Request) {
+	// first we parse the form
+	err := r.ParseForm()
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+	// init user
+	var user data.User
+	// parse data and password
+	firstName := r.Form.Get("first_name")
+	lastName := r.Form.Get("last_name")
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	// validation
+	validator := h.App.Validator(nil)
+
+	validator.Required(r, "first_name", "last_name", "email", "password")
+	validator.IsEmail("email", email)
+
+	validator.Check(len(r.Form.Get("first_name")) > 3, "first_name", "Must be at least 3 characters")
+	validator.Check(len(r.Form.Get("last_name")) > 3, "last_name", "Must be at least 3 characters")
+	validator.Check(len(r.Form.Get("password")) > 4, "password", "Must be at least 4 characters")
+
+	if !validator.Valid() {
+		vars := make(jet.VarMap)
+		vars.Set("validator", validator)
+		user.FirstName = firstName
+		user.LastName = lastName
+		user.Email = email
+		user.Password = password
+		vars.Set("user", user)
+		if err := h.App.Render.Page(w, r, "register", vars, nil); err != nil {
+			h.App.ErrorLog.Println(err)
+			return
+		}
+		return
+	}
+	// validation passed
+	// if this is the first user make is supper user
+	users, err := h.Models.Users.GetAll()
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+	user.FirstName = firstName
+	user.LastName = lastName
+	user.Email = email
+	user.Password = password
+	// make it supper user
+	if len(users) == 0 {
+		user.SuperUser = 1
+		user.Active = 1
+	}
+	_, err = h.Models.Users.Insert(user)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+	// redirect
+	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
+
+}
+
 // UserLogin display user login form
 func (h *Handlers) UserLogin(w http.ResponseWriter, r *http.Request) {
-	err := h.render(w, r, "login", nil, nil)
+	vars := make(jet.VarMap)
+	validator := h.App.Validator(nil)
+	vars.Set("validator", validator)
+	vars.Set("user", data.User{})
+	err := h.render(w, r, "login", vars, nil)
 	if err != nil {
 		h.App.ErrorLog.Println(err)
 	}
@@ -33,6 +114,26 @@ func (h *Handlers) UserLoginPost(w http.ResponseWriter, r *http.Request) {
 	// parse data and password
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
+	// validation
+	validator := h.App.Validator(nil)
+
+	validator.Required(r, "email", "password")
+	validator.IsEmail("email", email)
+	validator.Check(len(r.Form.Get("password")) > 4, "password", "Must be at least 4 characters")
+
+	if !validator.Valid() {
+		vars := make(jet.VarMap)
+		vars.Set("validator", validator)
+		var user data.User
+		user.Email = email
+		user.Password = email
+		vars.Set("user", user)
+		if err := h.App.Render.Page(w, r, "login", vars, nil); err != nil {
+			h.App.ErrorLog.Println(err)
+			return
+		}
+		return
+	}
 	// fetch user by email
 	user, err := h.Models.Users.GetByEmail(email)
 	if err != nil {
@@ -89,6 +190,7 @@ func (h *Handlers) UserLoginPost(w http.ResponseWriter, r *http.Request) {
 	h.App.Session.Put(r.Context(), "userID", user.ID)
 	// redirect
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+
 }
 
 func (h *Handlers) UserLogout(w http.ResponseWriter, r *http.Request) {
@@ -121,12 +223,16 @@ func (h *Handlers) UserLogout(w http.ResponseWriter, r *http.Request) {
 	//  renew token again
 	h.App.Session.RenewToken(r.Context())
 	// redirect
-	http.Redirect(w, r, "/users/login", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
 }
 
 // ForgotPassword displays forgot password page
 func (h *Handlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
-	err := h.render(w, r, "forgot", nil, nil)
+	vars := make(jet.VarMap)
+	validator := h.App.Validator(nil)
+	vars.Set("validator", validator)
+	vars.Set("user", data.User{})
+	err := h.render(w, r, "forgot", vars, nil)
 	if err != nil {
 		h.App.ErrorLog.Println(err)
 		h.App.Error500(w, r)
@@ -141,20 +247,37 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 		h.App.ErrorStatus(w, http.StatusBadRequest)
 		return
 	}
+	email := r.Form.Get("email")
+	// init user
+	var user data.User
 
+	// validation
+	validator := h.App.Validator(nil)
+	validator.Required(r, "email")
+	validator.IsEmail("email", email)
+	if !validator.Valid() {
+		vars := make(jet.VarMap)
+		vars.Set("validator", validator)
+		user.Email = email
+		user.Password = email
+		vars.Set("user", user)
+		if err := h.App.Render.Page(w, r, "forgot", vars, nil); err != nil {
+			h.App.ErrorLog.Println(err)
+			return
+		}
+		return
+	}
 	// check the email validity
+
 	// check if there is a user has the email
 	var u *data.User
-	email := r.Form.Get("email")
 	u, err = u.GetByEmail(email)
 	if err != nil {
 		h.App.ErrorStatus(w, http.StatusBadRequest)
 		return
 	}
-
 	// create a link to password reset from
 	link := fmt.Sprintf("%s/users/reset-password?email=%s", h.App.Server.URL, email)
-
 	// sign the link: send email with link specific to this user via token in the link
 	sign := signer.Signer{
 		Secret: []byte(h.App.EncryptionKey),
@@ -182,7 +305,9 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// redirect user
-	http.Redirect(w, r, "users/login", http.StatusSeeOther)
+	// redirect with flash message
+	h.App.Session.Put(r.Context(), "flash", "password reset email sent")
+	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
 }
 
 // ResetPasswordForm display reset password form
@@ -214,9 +339,10 @@ func (h *Handlers) ResetPasswordForm(w http.ResponseWriter, r *http.Request) {
 
 	// display form
 	encryptedEmail, _ := h.encrypt(email)
-
+	validator := h.App.Validator(nil)
 	vars := make(jet.VarMap)
 	vars.Set("email", encryptedEmail)
+	vars.Set("validator", validator)
 
 	err := h.render(w, r, "reset-password", vars, nil)
 	if err != nil {
@@ -239,7 +365,24 @@ func (h *Handlers) ResetPasswordFormPost(w http.ResponseWriter, r *http.Request)
 		h.App.Error500(w, r)
 		return
 	}
-
+	// validation
+	password := r.Form.Get("password")
+	verifyPassword := r.Form.Get("verify-password")
+	validator := h.App.Validator(nil)
+	validator.Required(r, "password", "verify-password")
+	validator.Check(len(password) > 4, "password", "Must be at least 4 characters")
+	validator.Check(len(verifyPassword) > 4, "verify-password", "Must be at least 4 characters")
+	if !validator.Valid() {
+		vars := make(jet.VarMap)
+		vars.Set("validator", validator)
+		vars.Set("password", password)
+		vars.Set("email", email)
+		if err := h.App.Render.Page(w, r, "reset-password", vars, nil); err != nil {
+			h.App.ErrorLog.Println(err)
+			return
+		}
+		return
+	}
 	// get the user
 	var u data.User
 	user, err := u.GetByEmail(email)
@@ -247,9 +390,8 @@ func (h *Handlers) ResetPasswordFormPost(w http.ResponseWriter, r *http.Request)
 		h.App.Error500(w, r)
 		return
 	}
-
 	// reset the password
-	err = user.ResetPassword(u.ID, r.Form.Get("password"))
+	err = user.ResetPassword(user.ID, r.Form.Get("password"))
 	if err != nil {
 		h.App.Error500(w, r)
 		return
@@ -257,5 +399,5 @@ func (h *Handlers) ResetPasswordFormPost(w http.ResponseWriter, r *http.Request)
 
 	// redirect with flash message
 	h.App.Session.Put(r.Context(), "flash", "password reset, you can log in.")
-	http.Redirect(w, r, "/users/login", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
 }

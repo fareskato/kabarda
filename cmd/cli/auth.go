@@ -22,7 +22,7 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
-	// TEMP
+
 	// run migrations
 	err = doMigrate("up", "")
 	if err != nil {

@@ -17,6 +17,7 @@ type User struct {
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 	Token     Token     `db:"-"`
+	SuperUser int       `db:"is_superuser"`
 }
 
 func (u *User) Table() string {
