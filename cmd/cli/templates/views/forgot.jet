@@ -53,12 +53,6 @@ Forgot Password
 
 </form>
 
-<div class="text-center">
-    <a class="btn btn-outline-secondary" href="/users/login">Back...</a>
-</div>
-
-
-<p>&nbsp;</p>
 {{end}}
 
 {{ block js()}}

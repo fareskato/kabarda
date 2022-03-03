@@ -259,7 +259,6 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 		vars := make(jet.VarMap)
 		vars.Set("validator", validator)
 		user.Email = email
-		user.Password = email
 		vars.Set("user", user)
 		if err := h.App.Render.Page(w, r, "forgot", vars, nil); err != nil {
 			h.App.ErrorLog.Println(err)
@@ -267,7 +266,6 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// check the email validity
 
 	// check if there is a user has the email
 	var u *data.User
@@ -289,9 +287,11 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 		Link string
 	}
 	data.Link = signedLink
-
+	// email address
+	senderEmail := os.Getenv("SMTP_FROM")
+	fmt.Println(senderEmail)
 	msg := mailer.Message{
-		From:        "fares@test.com",
+		From:        senderEmail,
 		To:          u.Email,
 		Subject:     "Reset password",
 		Template:    "password-reset",

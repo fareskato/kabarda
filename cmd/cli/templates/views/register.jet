@@ -51,7 +51,6 @@
     </form>
     <div class="text-center">
          <p>If you already registered You can login from here <a class="w-100 my-3" href="/users/login"> Login</a></p>
-        <a class="btn btn-outline-secondary w-100 my-3" href="/"> Home</a>
     </div>
 {{ end }}
 

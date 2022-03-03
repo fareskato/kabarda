@@ -41,7 +41,12 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	res := collection.Find(up.Cond{"email": email})
 	err := res.One(&user)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, up.ErrNoMoreRows), errors.Is(err, up.ErrNilRecord):
+			return nil, ErrorRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 	// Get user token
 	var token Token
@@ -50,7 +55,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	err = res.One(&token)
 	if err != nil {
 		if err != up.ErrNilRecord && err != up.ErrNoMoreRows {
-			return nil, err
+			return nil, ErrorRecordNotFound
 		}
 	}
 	user.Token = token
@@ -63,7 +68,12 @@ func (u *User) GetById(id int) (*User, error) {
 	res := collection.Find(up.Cond{"id": id})
 	err := res.One(&user)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, up.ErrNoMoreRows), errors.Is(err, up.ErrNilRecord):
+			return nil, ErrorRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 	// Get user token
 	var token Token
@@ -87,7 +97,12 @@ func (u *User) Update(theUser User) error {
 	res := collection.Find(theUser.ID)
 	err := res.Update(&theUser)
 	if err != nil {
-		return err
+		switch err.Error() {
+		case ErrorDuplicateEmailMessage:
+			return ErrorDuplicateEmail
+		default:
+			return err
+		}
 	}
 	return nil
 }
@@ -115,7 +130,12 @@ func (u *User) Insert(theUser User) (int, error) {
 	collection := upper.Collection(u.Table())
 	res, err := collection.Insert(theUser)
 	if err != nil {
-		return 0, err
+		switch err.Error() {
+		case ErrorDuplicateEmailMessage:
+			return 0, ErrorDuplicateEmail
+		default:
+			return 0, err
+		}
 	}
 	recordId := getInsertedId(res.ID())
 	return recordId, nil
@@ -150,12 +170,11 @@ func (u *User) PasswordMatches(password string) (bool, error) {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 			return false, nil
 		default:
-			return false, err
+			return false, ErrorPasswordMatch
 		}
 	}
 	return true, nil
 }
-
 
 func (u *User) CheckForRememberToken(id int, token string) bool {
 	var rememberToken RememberToken

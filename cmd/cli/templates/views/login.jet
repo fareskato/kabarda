@@ -41,7 +41,6 @@
     </form>
     <div class="text-center">
         <p> didn't register yes?? <a class="" href="/users/register"> Register</a></p>
-        <a class="btn btn-outline-secondary w-100" href="/"> Home</a>
     </div>
 {{ end }}
 
