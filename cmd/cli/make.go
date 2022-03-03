@@ -8,30 +8,43 @@ import (
 	"github.com/iancoleman/strcase"
 	"io/ioutil"
 	"strings"
-	"time"
 )
 
-func doMake(arg2, arg3 string) error {
+func doMake(arg2, arg3, arg4 string) error {
 	switch arg2 {
 	case "migration":
-		// get database type(postgres, mysql)
-		dbType := kbr.DB.DataBaseType
+		// make sure database is set up
+		checkForDB()
+		//dbType := kbr.DB.DataBaseType
 		if arg3 == "" {
 			exitGracefully(errors.New("please give a migration descriptive name"))
 		}
-		// build migration name
-		fileName := fmt.Sprintf("%d_%s", time.Now().UnixMicro(), arg3)
-		upFile := kbr.RootPath + "/migrations/" + fileName + "." + dbType + ".up.sql"
-		downFile := kbr.RootPath + "/migrations/" + fileName + "." + dbType + ".down.sql"
+		// default migration type of fizz
+		migrationType := "fizz"
+		var up, down string
+		// are we using fizz of raw sql?
+		if arg4 == "" || arg4 == "fizz" {
+			// read fizz migrations files from template/migrations
+			upBytes, err := templateFS.ReadFile("templates/migrations/migration_up.fizz")
+			if err != nil {
+				exitGracefully(err)
+			}
+			downBytes, err := templateFS.ReadFile("templates/migrations/migration_down.fizz")
+			if err != nil {
+				exitGracefully(err)
+			}
+			up = string(upBytes)
+			down = string(downBytes)
+		} else {
+			migrationType = "sql"
+		}
 
-		err := copyFileFromTemplate("templates/migrations/migration."+dbType+".up.sql", upFile)
+		// create the migrations for either fizz or sql
+		err := kbr.CreatePopMigrations([]byte(up), []byte(down), arg3, migrationType)
 		if err != nil {
 			exitGracefully(err)
 		}
-		err = copyFileFromTemplate("templates/migrations/migration."+dbType+".down.sql", downFile)
-		if err != nil {
-			exitGracefully(err)
-		}
+
 	case "auth":
 		err := doAuth()
 		if err != nil {

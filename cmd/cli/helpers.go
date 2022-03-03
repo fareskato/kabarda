@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/joho/godotenv"
@@ -9,21 +10,33 @@ import (
 	"strings"
 )
 
+// checkForDB checks if the database is set up in .env file and ensure that
+// database.yml file is there(needed for fizz)
+func checkForDB() {
+	dbType := kbr.DB.DataBaseType
+	if dbType == "" {
+		exitGracefully(errors.New("no database connection provided in .env file"))
+	}
+	if !isFileExists(kbr.RootPath + "/config/database.yml") {
+		exitGracefully(errors.New("config/database.yml file does not exist"))
+	}
+}
+
 func showHelp() {
 	color.Yellow("")
 	color.Yellow(`Available commands:
-	help                          - show help commands
-	version                       - print application version
-	migrate                       - runs  all migrations that have not run previously
-	migrate down                  - roll back the most recent migration
-	migrate reset                 - runs all down migrations in revers order then run all migrations up
-	make migrations <name>        - creates migration up and down migration files in migrations folder
-	make auth                     - creates and run auth migrations files, models and middlewares 
-	make handler <name>           - creates handler in handlers directory
-	make model <name>             - creates model in data directory
-	make session                  - creates table in the database as session store
-	make key                      - creates 32 character encryption key
-	make mail <name>              - creates starter mail templates(html and plain text) in the mail directory
+	help                                - show help commands
+	version                             - print application version
+	migrate                             - runs  all migrations that have not run previously
+	migrate down                        - roll back the most recent migration
+	migrate reset                       - runs all down migrations in revers order then run all migrations up
+	make migration <name> <format>      - creates migration up and down(fizz or sql, the default is fizz) migration files in migrations folder
+	make auth                           - creates and run auth migrations files, models and middlewares 
+	make handler <name>                 - creates handler in handlers directory
+	make model <name>                   - creates model in data directory
+	make session                        - creates table in the database as session store
+	make key                            - creates 32 character encryption key
+	make mail <name>                    - creates starter mail templates(html and plain text) in the mail directory
 `)
 	color.Yellow("")
 }

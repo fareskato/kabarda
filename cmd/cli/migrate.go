@@ -6,36 +6,38 @@ package main
 
 // doMigrate run migrations commands
 func doMigrate(arg2, arg3 string) error {
-	// get the connection string
-	dsn := getDSN()
+	// ensure that database is set
+	checkForDB()
+	// connect to DB via pop
+	tx, err := kbr.PopConnect()
+	if err != nil {
+		exitGracefully(err)
+	}
+	defer tx.Close()
+
 	// run migration commands
 	switch arg2 {
 	case "up":
-		err := kbr.MigrateUp(dsn)
+		//err := kbr.MigrateUp(dsn)
+		err := kbr.RunPopMigrations(tx)
 		if err != nil {
 			return err
 		}
 	case "down":
-		// roll back all migration
 		if arg3 == "all" {
-			err := kbr.MigrateDownAll(dsn)
+			err := kbr.PopMigrateDown(tx, -1)
 			if err != nil {
 				return err
 			}
-			// roll back the last migration
 		} else {
-			err := kbr.MigrateSteps(-1, dsn)
+			err := kbr.PopMigrateDown(tx, 1)
 			if err != nil {
 				return err
 			}
 		}
 	// reset DB: run all migrations down then run up again
 	case "reset":
-		err := kbr.MigrateDownAll(dsn)
-		if err != nil {
-			return err
-		}
-		err = kbr.MigrateUp(dsn)
+		err := kbr.PopMigrationsReset(tx)
 		if err != nil {
 			return err
 		}

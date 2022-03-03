@@ -13,7 +13,7 @@ var kbr kabarda.Kabarda
 
 func main() {
 	var message string
-	arg1, arg2, arg3, err := validateInput()
+	arg1, arg2, arg3, arg4, err := validateInput()
 	if err != nil {
 		exitGracefully(err)
 	}
@@ -44,7 +44,7 @@ func main() {
 		if arg2 == "" {
 			exitGracefully(errors.New("make requires sub command: migration|model|handler ...etc"))
 		}
-		err = doMake(arg2, arg3)
+		err = doMake(arg2, arg3, arg4)
 		if err != nil {
 			exitGracefully(err)
 		}
@@ -57,20 +57,23 @@ func main() {
 	exitGracefully(nil, message)
 }
 
-func validateInput() (string, string, string, error) {
-	var str1, str2, str3 string
+func validateInput() (string, string, string, string, error) {
+	var str1, str2, str3, str4 string
 	// get command line arguments
 	if len(os.Args) > 1 {
 		str1 = os.Args[1]
-		if len(os.Args) > 2 {
+		if len(os.Args) >= 3 {
 			str2 = os.Args[2]
 		}
-		if len(os.Args) > 3 {
+		if len(os.Args) >= 4 {
 			str3 = os.Args[3]
+		}
+		if len(os.Args) >= 5 {
+			str4 = os.Args[4]
 		}
 	} else {
 		showHelp()
-		return "", "", "", errors.New("command required")
+		return "", "", "", "", errors.New("command required")
 	}
-	return str1, str2, str3, nil
+	return str1, str2, str3, str4, nil
 }

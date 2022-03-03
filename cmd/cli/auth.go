@@ -1,30 +1,35 @@
 package main
 
 import (
-	"fmt"
 	"github.com/fatih/color"
 	"os"
-	"time"
 )
 
 func doAuth() error {
+	// ensure database is set
+	checkForDB()
 	// create migrations
 	dbType := kbr.DB.DataBaseType
-	fileName := fmt.Sprintf("%d_create_auth_tables", time.Now().UnixMicro())
-	upFile := kbr.RootPath + "/migrations/" + fileName + ".up.sql"
-	downFile := kbr.RootPath + "/migrations/" + fileName + ".down.sql"
-	err := copyFileFromTemplate("templates/migrations/auth_tables."+dbType+".sql", upFile)
-	if err != nil {
-		exitGracefully(err)
-	}
-	err = copyDataToFile([]byte("drop table if exists users cascade; drop table if exists tokens cascade;"+
-		" drop table if exists remember_tokens;"), downFile)
-	if err != nil {
-		exitGracefully(err)
-	}
 
+	// connect to DB via pop
+	tx, err := kbr.PopConnect()
+	if err != nil {
+		exitGracefully(err)
+	}
+	defer tx.Close()
+
+	upBytes, err := templateFS.ReadFile("templates/migrations/auth_tables." + dbType + ".sql")
+	if err != nil {
+		exitGracefully(err)
+	}
+	downBytes := []byte("drop table if exists users cascade; drop table if exists tokens cascade; drop table if exists remember_tokens;")
+
+	err = kbr.CreatePopMigrations(upBytes, downBytes, "auth", "sql")
+	if err != nil {
+		exitGracefully(err)
+	}
 	// run migrations
-	err = doMigrate("up", "")
+	err = kbr.RunPopMigrations(tx)
 	if err != nil {
 		exitGracefully(err)
 	}
