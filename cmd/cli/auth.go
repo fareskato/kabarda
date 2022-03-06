@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/fatih/color"
 	"os"
+
+	"github.com/fatih/color"
 )
 
 func doAuth() error {
@@ -17,7 +18,9 @@ func doAuth() error {
 		exitGracefully(err)
 	}
 	defer tx.Close()
-
+	///////////////
+	// Migrations
+	///////////////
 	upBytes, err := templateFS.ReadFile("templates/migrations/auth_tables." + dbType + ".sql")
 	if err != nil {
 		exitGracefully(err)
@@ -33,7 +36,9 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
-
+	///////////////
+	// Models
+	///////////////
 	// copy all auth functionality related files(users and token models)
 	err = copyFileFromTemplate("templates/data/user.go.txt", kbr.RootPath+"/data/user.go")
 	if err != nil {
@@ -48,7 +53,9 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
-
+	///////////////
+	// Mfiddlewares
+	///////////////
 	// copy auth middlewares
 	err = copyFileFromTemplate("templates/middlewares/auth.go.txt", kbr.RootPath+"/middlewares/auth.go")
 	if err != nil {
@@ -62,11 +69,21 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
+	///////////////
+	// Handlers
+	///////////////
 	// copy handlers
 	err = copyFileFromTemplate("templates/handlers/auth-handlers.go.txt", kbr.RootPath+"/handlers/auth-handlers.go")
 	if err != nil {
 		exitGracefully(err)
 	}
+	err = copyFileFromTemplate("templates/handlers/admin-handlers.go.txt", kbr.RootPath+"/handlers/admin-handlers.go")
+	if err != nil {
+		exitGracefully(err)
+	}
+	///////////////
+	// Views
+	///////////////
 	// copy views and mailer views
 	err = copyFileFromTemplate("templates/mailer/password-reset.html.gohtml", kbr.RootPath+"/mail/password-reset.html.gohtml")
 	if err != nil {
@@ -92,6 +109,22 @@ func doAuth() error {
 	if err != nil {
 		exitGracefully(err)
 	}
+	err = copyFileFromTemplate("templates/views/admin.jet", kbr.RootPath+"/views/layouts/admin.jet")
+	if err != nil {
+		exitGracefully(err)
+	}
+	err = copyFileFromTemplate("templates/views/dashboard.jet", kbr.RootPath+"/views/dashboard.jet")
+	if err != nil {
+		exitGracefully(err)
+	}
+	err = copyFileFromTemplate("templates/views/404-admin.jet", kbr.RootPath+"/views/404-admin.jet")
+	if err != nil {
+		exitGracefully(err)
+	}
+
+	////////////////////////
+	// End of copying files
+	////////////////////////
 	// correct the imports on auth
 	appURL = os.Getenv("APP_NAME")
 	updateSource()

@@ -8,6 +8,11 @@
     <h2 class="mt-5 text-center">Register</h2>
     <div class="col">
     <hr>
+    {{if .Error != ""}}
+    <div class="alert alert-danger text-center">
+        {{.Error}}
+    </div>
+    {{end}}
     {{if .Flash != ""}}
     <div class="alert alert-info text-center">
         {{.Flash}}

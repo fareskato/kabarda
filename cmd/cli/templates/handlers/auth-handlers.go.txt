@@ -4,18 +4,22 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/CloudyKit/jet/v6"
-	"github.com/fareskato/kabarda/mailer"
-	"github.com/fareskato/kabarda/signer"
 	"myapp/data"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/CloudyKit/jet/v6"
+	"github.com/fareskato/kabarda/mailer"
+	"github.com/fareskato/kabarda/signer"
 )
 
 const RememberToken = "remember_token"
 
 func (h *Handlers) UserRegister(w http.ResponseWriter, r *http.Request) {
+	// remove if u want to logout the logged in user in case if
+	// he wants to register another account(while he is logged in)
+	// h.App.Session.RenewToken(r.Context())
 	vars := make(jet.VarMap)
 	validator := h.App.Validator(nil)
 	vars.Set("validator", validator)
@@ -83,16 +87,23 @@ func (h *Handlers) UserRegisterPost(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = h.Models.Users.Insert(user)
 	if err != nil {
-		w.Write([]byte(err.Error()))
+		h.sessionPut(r.Context(), "error", err.Error())
+		http.Redirect(w, r, os.Getenv("USER_REGISTER"), http.StatusSeeOther)
 		return
 	}
 	// redirect
-	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
+	http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 
 }
 
 // UserLogin display user login form
 func (h *Handlers) UserLogin(w http.ResponseWriter, r *http.Request) {
+	// if the user logged in redirect back to home page with message
+	if h.sessionExists(r.Context(), "userID") {
+		h.sessionPut(r.Context(), "flash", "You already logged in !")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
 	vars := make(jet.VarMap)
 	validator := h.App.Validator(nil)
 	vars.Set("validator", validator)
@@ -137,17 +148,20 @@ func (h *Handlers) UserLoginPost(w http.ResponseWriter, r *http.Request) {
 	// fetch user by email
 	user, err := h.Models.Users.GetByEmail(email)
 	if err != nil {
-		w.Write([]byte(err.Error()))
+		h.sessionPut(r.Context(), "error", err.Error())
+		http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 		return
 	}
 	// now we have the user, so we can check password matches
 	missMatches, err := user.PasswordMatches(password)
 	if err != nil {
-		w.Write([]byte("Validating password error"))
+		h.sessionPut(r.Context(), "error", err.Error())
+		http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 		return
 	}
 	if !missMatches {
-		w.Write([]byte("Password matches error"))
+		h.sessionPut(r.Context(), "error", "password match error")
+		http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 		return
 	}
 	// remember me checked?
@@ -189,7 +203,7 @@ func (h *Handlers) UserLoginPost(w http.ResponseWriter, r *http.Request) {
 	// put user id in the session
 	h.App.Session.Put(r.Context(), "userID", user.ID)
 	// redirect
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, os.Getenv("ADMIN_DASHBOARD"), http.StatusSeeOther)
 
 }
 
@@ -223,7 +237,8 @@ func (h *Handlers) UserLogout(w http.ResponseWriter, r *http.Request) {
 	//  renew token again
 	h.App.Session.RenewToken(r.Context())
 	// redirect
-	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
+	h.sessionPut(r.Context(), "flash", "You just logged out, come back later )")
+	http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 }
 
 // ForgotPassword displays forgot password page
@@ -271,7 +286,8 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 	var u *data.User
 	u, err = u.GetByEmail(email)
 	if err != nil {
-		h.App.ErrorStatus(w, http.StatusBadRequest)
+		h.sessionPut(r.Context(), "error", err.Error())
+		http.Redirect(w, r, os.Getenv("USER_FORGOT_PASSWORD"), http.StatusSeeOther)
 		return
 	}
 	// create a link to password reset from
@@ -289,7 +305,6 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 	data.Link = signedLink
 	// email address
 	senderEmail := os.Getenv("SMTP_FROM")
-	fmt.Println(senderEmail)
 	msg := mailer.Message{
 		From:        senderEmail,
 		To:          u.Email,
@@ -306,12 +321,13 @@ func (h *Handlers) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
 	}
 	// redirect user
 	// redirect with flash message
-	h.App.Session.Put(r.Context(), "flash", "password reset email sent")
-	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
+	h.App.Session.Put(r.Context(), "flash", "password reset email with link sent, please check your email address")
+	http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 }
 
 // ResetPasswordForm display reset password form
 func (h *Handlers) ResetPasswordForm(w http.ResponseWriter, r *http.Request) {
+
 	// get form values
 	email := r.URL.Query().Get("email")
 	theURL := r.RequestURI
@@ -367,26 +383,28 @@ func (h *Handlers) ResetPasswordFormPost(w http.ResponseWriter, r *http.Request)
 	}
 	// validation
 	password := r.Form.Get("password")
-	verifyPassword := r.Form.Get("verify-password")
 	validator := h.App.Validator(nil)
-	validator.Required(r, "password", "verify-password")
+	validator.Required(r, "password")
 	validator.Check(len(password) > 4, "password", "Must be at least 4 characters")
-	validator.Check(len(verifyPassword) > 4, "verify-password", "Must be at least 4 characters")
 	if !validator.Valid() {
 		vars := make(jet.VarMap)
 		vars.Set("validator", validator)
 		vars.Set("password", password)
 		vars.Set("email", email)
-		if err := h.App.Render.Page(w, r, "reset-password", vars, nil); err != nil {
-			h.App.ErrorLog.Println(err)
-			return
-		}
+		h.sessionPut(r.Context(), "error", "something went wrong, send another request")
+		http.Redirect(w, r, os.Getenv("USER_FORGOT_PASSWORD"), http.StatusSeeOther)
+		// if err := h.App.Render.Page(w, r, "reset-password", vars, nil); err != nil {
+		// 	h.App.ErrorLog.Println(err)
+		// 	return
+		// }
 		return
 	}
 	// get the user
 	var u data.User
 	user, err := u.GetByEmail(email)
 	if err != nil {
+		// h.App.Session.Put(r.Context(), "flash", "please try again.")
+		// http.Redirect(w, r, os.Getenv("USER_RESET_PASSWORD"), http.StatusSeeOther)
 		h.App.Error500(w, r)
 		return
 	}
@@ -399,5 +417,5 @@ func (h *Handlers) ResetPasswordFormPost(w http.ResponseWriter, r *http.Request)
 
 	// redirect with flash message
 	h.App.Session.Put(r.Context(), "flash", "password reset, you can log in.")
-	http.Redirect(w, r, fmt.Sprintf("%s", os.Getenv("USER_LOGIN")), http.StatusSeeOther)
+	http.Redirect(w, r, os.Getenv("USER_LOGIN"), http.StatusSeeOther)
 }

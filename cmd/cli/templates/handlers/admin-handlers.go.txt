@@ -1,0 +1,41 @@
+package handlers
+
+import (
+	"myapp/data"
+	"net/http"
+
+	"github.com/CloudyKit/jet/v6"
+)
+
+func (h *Handlers) getLoggedInUser(r *http.Request) *data.User {
+	userID := h.sessionGet(r.Context(), "userID")
+	id := userID.(int)
+	user, _ := h.Models.Users.GetById(id)
+	return user
+}
+
+func (h *Handlers) NotFoundDashboard(w http.ResponseWriter, r *http.Request) {
+	h.App.Session.RenewToken(r.Context())
+	vars := make(jet.VarMap)
+	// get the logged in user
+	user := h.getLoggedInUser(r)
+	vars.Set("user", user)
+	w.WriteHeader(http.StatusNotFound)
+	err := h.render(w, r, "404-admin", vars, nil)
+	if err != nil {
+		h.App.ErrorLog.Println("error rendering template:", err)
+	}
+
+}
+
+func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
+	h.App.Session.RenewToken(r.Context())
+	vars := make(jet.VarMap)
+	// get the logged in user
+	user := h.getLoggedInUser(r)
+	vars.Set("user", user)
+	err := h.render(w, r, "dashboard", vars, nil)
+	if err != nil {
+		h.App.ErrorLog.Println(err)
+	}
+}

@@ -1,0 +1,44 @@
+{{extends "./layouts/admin.jet"}}
+
+{{block browserTitle()}}
+Dashboard
+{{end}}
+
+{{block css()}} {{end}}
+
+{{block adminData(name=user.FirstName)}}
+    <li class="nav-item"><span class="nav-link link-dark">Welcome <b>{{name | upper}}</b></span></li>
+{{end}}
+
+{{block pageContent()}}
+    <div class="col-md-3">
+        your menu goes here ....
+    </div>
+    <div class="col-md-9">
+        <h2>Dashboard </h2>
+    <hr>
+    <p>you logged in as admin: {{user.FirstName }}</p>
+    <p>All contents goes here ...</p>
+    </div>
+
+
+    
+
+{{if .Error != ""}}
+<div class="alert alert-danger text-center">
+    {{.Error}}
+</div>
+{{end}}
+
+{{if .Flash != ""}}
+<div class="alert alert-info text-center">
+    {{.Flash}}
+</div>
+{{end}}
+
+{{end}}
+
+
+{{ block js()}}
+
+{{end}}
