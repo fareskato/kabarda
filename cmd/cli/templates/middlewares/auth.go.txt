@@ -1,6 +1,9 @@
 package middlewares
 
-import "net/http"
+import (
+	"net/http"
+	"os"
+)
 
 // Auth web authentication checks if the user id exists in the session
 func (m *Middleware) Auth(next http.Handler) http.Handler {
